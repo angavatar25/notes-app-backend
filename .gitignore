@@ -1,0 +1,35 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Compiled binary
+/myapp           # replace with your binary name
+main             # common binary name
+bin/
+build/
+
+# Dependency directories (if used)
+vendor/
+
+# IDE/editor specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Air configuration and temp files
+.air.toml        # optional, if you want each dev to have their own config
+tmp/

@@ -1,0 +1,25 @@
+# .air.toml
+# Root directory of your app
+root = "."
+
+# Temporary build directory
+tmp_dir = "tmp"
+
+[build]
+# Command to build your app
+cmd = "go build -o ./tmp/main ."
+
+# The binary Air runs after building
+bin = "tmp/main"
+
+# Files or extensions to watch
+include_ext = ["go", "tpl", "tmpl", "html"]
+
+# Exclude temporary folders
+exclude_dir = ["tmp", "vendor"]
+
+# Delay to wait before rebuilding (milliseconds)
+delay = 1000
+
+[log]
+time = true
