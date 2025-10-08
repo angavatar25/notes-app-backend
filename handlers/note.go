@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var note models.Note
+
 type Handler struct {
 	DB *sql.DB
 }
@@ -17,7 +19,7 @@ func NewHandler(db *sql.DB) *Handler {
 }
 
 func (h *Handler) GetNoteList(c *gin.Context) {
-	rows, err := h.DB.Query(`SELECT title, bodyText, noteColor FROM note`)
+	rows, err := h.DB.Query(`SELECT id, title, bodyText, noteColor, labelname FROM note`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -27,7 +29,7 @@ func (h *Handler) GetNoteList(c *gin.Context) {
 	var notes []models.Note
 	for rows.Next() {
 		var n models.Note
-		if err := rows.Scan(&n.Title, &n.BodyText, &n.NoteColor); err != nil {
+		if err := rows.Scan(&n.ID, &n.Title, &n.BodyText, &n.NoteColor, &n.LabelName); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -42,6 +44,27 @@ func (h *Handler) GetNoteList(c *gin.Context) {
 	c.JSON(http.StatusOK, notes)
 }
 
+func (h *Handler) GetNoteByID(c *gin.Context) {
+	id := c.Param("id")
+
+	rows, err := h.DB.Query(`SELECT id, title, bodyText, noteColor, labelname FROM note WHERE id=$1`, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		var n models.Note
+		if err := rows.Scan(&n.ID, &n.Title, &n.BodyText, &n.NoteColor, &n.LabelName); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, n)
+		return
+	}
+}
+
 func (h *Handler) CreateNote(c *gin.Context) {
 	var note models.Note
 
@@ -50,10 +73,10 @@ func (h *Handler) CreateNote(c *gin.Context) {
 		return
 	}
 
-	query := `insert into note (title, bodyText, notecolor) values ($1, $2, $3) returning id`
+	query := `insert into note (title, bodyText, notecolor, labelname) values ($1, $2, $3, $4) returning id`
 
 	var id string
-	err := h.DB.QueryRow(query, note.Title, note.BodyText, note.NoteColor).Scan(&id)
+	err := h.DB.QueryRow(query, note.Title, note.BodyText, note.NoteColor, note.LabelName).Scan(&id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -73,9 +96,9 @@ func (h *Handler) UpdateNote(c *gin.Context) {
 		return
 	}
 
-	query := `update note set title=$1, bodyText=$2, notecolor=$3 where id=$4`
+	query := `update note set title=$1, bodyText=$2, notecolor=$3, labelname=$4 where id=$5`
 
-	_, err := h.DB.Exec(query, note.Title, note.BodyText, note.NoteColor, id)
+	_, err := h.DB.Exec(query, note.Title, note.BodyText, note.NoteColor, note.LabelName, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -6,6 +6,7 @@ import (
 	"log"
 	"todo-list/handlers"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
@@ -35,9 +36,12 @@ func main() {
 
 	r := gin.Default()
 
+	r.Use(cors.Default())
+
 	notes := r.Group("/notes")
 	{
 		notes.GET("/lists", h.GetNoteList)
+		notes.GET("/get/:id", h.GetNoteByID)
 		notes.POST("/create", h.CreateNote)
 		notes.PUT("/update/:id", h.UpdateNote)
 		notes.DELETE("/delete/:id", h.DeleteNote)

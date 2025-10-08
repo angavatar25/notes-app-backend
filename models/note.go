@@ -5,4 +5,5 @@ type Note struct {
 	Title     string `json:"title" db:"title" binding:"required"`
 	BodyText  string `json:"bodyText" db:"bodyText" binding:"required"`
 	NoteColor string `json:"notecolor" db:"notecolor"`
+	LabelName string `json:"labelname" db:"labelname"`
 }
