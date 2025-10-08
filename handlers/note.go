@@ -8,8 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var note models.Note
-
 type Handler struct {
 	DB *sql.DB
 }
@@ -118,4 +116,31 @@ func (h *Handler) DeleteNote(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Note deleted successfully"})
+}
+
+func (h *Handler) GetLabelList(c *gin.Context) {
+	rows, err := h.DB.Query(`SELECT id, labelname FROM labels`)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var labels []models.Labels
+
+	for rows.Next() {
+		var l models.Labels
+		if err := rows.Scan(&l.ID, &l.LabelName); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		labels = append(labels, l)
+	}
+
+	if err := rows.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, labels)
 }

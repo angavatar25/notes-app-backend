@@ -42,6 +42,7 @@ func main() {
 	{
 		notes.GET("/lists", h.GetNoteList)
 		notes.GET("/get/:id", h.GetNoteByID)
+		notes.GET("/labels", h.GetLabelList)
 		notes.POST("/create", h.CreateNote)
 		notes.PUT("/update/:id", h.UpdateNote)
 		notes.DELETE("/delete/:id", h.DeleteNote)

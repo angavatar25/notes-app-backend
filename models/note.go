@@ -7,3 +7,8 @@ type Note struct {
 	NoteColor string `json:"notecolor" db:"notecolor"`
 	LabelName string `json:"labelname" db:"labelname"`
 }
+
+type Labels struct {
+	ID        string `json:"id" db:"id"`
+	LabelName string `json:"labelname" db:"labelname"`
+}
