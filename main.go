@@ -4,7 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
+
 	"todo-list/handlers"
+	"todo-list/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -36,9 +39,16 @@ func main() {
 
 	r := gin.Default()
 
-	r.Use(cors.Default())
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
-	notes := r.Group("/notes")
+	notes := r.Group("/notes", middleware.AuthMiddleware())
 	{
 		notes.GET("/lists", h.GetNoteList)
 		notes.GET("/get/:id", h.GetNoteByID)
@@ -46,6 +56,17 @@ func main() {
 		notes.POST("/create", h.CreateNote)
 		notes.PUT("/update/:id", h.UpdateNote)
 		notes.DELETE("/delete/:id", h.DeleteNote)
+	}
+
+	auth := r.Group("/auth")
+	{
+		auth.POST("/login", h.UserLogin)
+		auth.POST("/register", h.UserRegister)
+	}
+
+	user := r.Group("/user", middleware.AuthMiddleware())
+	{
+		user.GET("/detail", h.GetUserData)
 	}
 
 	fmt.Printf("🚀 Server running on http://localhost:%d\n", server)

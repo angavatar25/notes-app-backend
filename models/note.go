@@ -6,6 +6,7 @@ type Note struct {
 	BodyText  string `json:"bodyText" db:"bodyText" binding:"required"`
 	NoteColor string `json:"notecolor" db:"notecolor"`
 	LabelName string `json:"labelname" db:"labelname"`
+	UserID    string `json:"userid" db:"user_id"`
 }
 
 type Labels struct {
