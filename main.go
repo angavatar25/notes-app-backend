@@ -67,6 +67,7 @@ func main() {
 	user := r.Group("/user", middleware.AuthMiddleware())
 	{
 		user.GET("/detail", h.GetUserData)
+		user.GET("/settings", h.GetUserSettings)
 	}
 
 	fmt.Printf("🚀 Server running on http://localhost:%d\n", server)

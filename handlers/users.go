@@ -39,3 +39,36 @@ func (h *Handler) GetUserData(c *gin.Context) {
 		return
 	}
 }
+
+func (h *Handler) GetUserSettings(c *gin.Context) {
+	userIDVal, exists := c.Get("user_id")
+
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+	}
+
+	userID, ok := userIDVal.(string)
+
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+		return
+	}
+
+	rows, err := h.DB.Query(`SELECT darkmode FROM usersettings WHERE userid=$1`, userID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		var settings models.UserSettings
+		if err := rows.Scan(&settings.DarkMode); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, settings)
+		return
+	}
+}
