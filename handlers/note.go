@@ -17,7 +17,14 @@ func NewHandler(db *sql.DB) *Handler {
 }
 
 func (h *Handler) GetNoteList(c *gin.Context) {
-	rows, err := h.DB.Query(`SELECT id, title, bodyText, noteColor, labelname FROM note`)
+	userID, exists := c.Get("user_id")
+
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+	}
+
+	rows, err := h.DB.Query(
+		`SELECT id, title, bodyText, noteColor, labelname FROM note where userid=$1`, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -66,15 +73,29 @@ func (h *Handler) GetNoteByID(c *gin.Context) {
 func (h *Handler) CreateNote(c *gin.Context) {
 	var note models.Note
 
+	userIDVal, exists := c.Get("user_id")
+
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+		return
+	}
+
 	if err := c.BindJSON(&note); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payloads"})
 		return
 	}
 
-	query := `insert into note (title, bodyText, notecolor, labelname) values ($1, $2, $3, $4) returning id`
+	userID, ok := userIDVal.(string)
+
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+		return
+	}
+
+	query := `insert into note (title, bodyText, notecolor, labelname, userid) values ($1, $2, $3, $4, $5) returning id`
 
 	var id string
-	err := h.DB.QueryRow(query, note.Title, note.BodyText, note.NoteColor, note.LabelName).Scan(&id)
+	err := h.DB.QueryRow(query, note.Title, note.BodyText, note.NoteColor, note.LabelName, userID).Scan(&id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
