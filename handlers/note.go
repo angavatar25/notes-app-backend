@@ -24,7 +24,7 @@ func (h *Handler) GetNoteList(c *gin.Context) {
 	}
 
 	rows, err := h.DB.Query(
-		`SELECT id, title, bodyText, noteColor, labelname FROM note where userid=$1`, userID)
+		`SELECT id, title, bodyText, noteColor, labelname, created_at FROM note where userid=$1 ORDER BY created_at DESC`, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -34,7 +34,7 @@ func (h *Handler) GetNoteList(c *gin.Context) {
 	var notes []models.Note
 	for rows.Next() {
 		var n models.Note
-		if err := rows.Scan(&n.ID, &n.Title, &n.BodyText, &n.NoteColor, &n.LabelName); err != nil {
+		if err := rows.Scan(&n.ID, &n.Title, &n.BodyText, &n.NoteColor, &n.LabelName, &n.CreatedAt); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
