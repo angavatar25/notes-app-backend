@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"todo-list/models"
 
@@ -17,18 +18,50 @@ func NewHandler(db *sql.DB) *Handler {
 }
 
 func (h *Handler) GetNoteList(c *gin.Context) {
+	label := c.Query("label")
 	userID, exists := c.Get("user_id")
 
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 	}
 
-	rows, err := h.DB.Query(
-		`SELECT id, title, bodyText, noteColor, labelname, created_at FROM note where userid=$1 ORDER BY created_at DESC`, userID)
+	fmt.Println(label, "label")
+
+	if label == "All" || label == "" {
+		rows, err := h.DB.Query(
+			`SELECT id, title, bodyText, noteColor, labelname, created_at FROM note where userid=$1 ORDER BY created_at DESC`, userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		var notes []models.Note
+		for rows.Next() {
+			var n models.Note
+			if err := rows.Scan(&n.ID, &n.Title, &n.BodyText, &n.NoteColor, &n.LabelName, &n.CreatedAt); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			notes = append(notes, n)
+		}
+
+		if err := rows.Err(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, notes)
+		return
+	}
+
+	rows, err := h.DB.Query(`select id, title, bodytext, notecolor, labelname, created_at from note where labelname like $1 and userid=$2`, label, userID)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	defer rows.Close()
 
 	var notes []models.Note
@@ -40,12 +73,6 @@ func (h *Handler) GetNoteList(c *gin.Context) {
 		}
 		notes = append(notes, n)
 	}
-
-	if err := rows.Err(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
 	c.JSON(http.StatusOK, notes)
 }
 
@@ -164,4 +191,34 @@ func (h *Handler) GetLabelList(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, labels)
+}
+
+func (h *Handler) GetNotesByLabel(c *gin.Context) {
+	label := c.Param("label")
+	userID, exists := c.Get("user_id")
+
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	rows, err := h.DB.Query(`select id, title, bodytext, notecolor, labelname, created_at from note where labelname like $1 and userid=$2`, label, userID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	defer rows.Close()
+
+	var notes []models.Note
+	for rows.Next() {
+		var n models.Note
+		if err := rows.Scan(&n.ID, &n.Title, &n.BodyText, &n.NoteColor, &n.LabelName, &n.CreatedAt); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		notes = append(notes, n)
+	}
+	c.JSON(http.StatusOK, notes)
 }
