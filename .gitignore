@@ -6,6 +6,7 @@
 *.dylib
 *.test
 *.out
+*.env
 
 # Compiled binary
 /myapp           # replace with your binary name
